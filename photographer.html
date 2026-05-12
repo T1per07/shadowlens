@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>摄影师 | 影子 ShadowLens</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400;600&family=Inter:wght@200;300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Noise overlay for texture -->
+  <div class="noise-overlay"></div>
+
+  <!-- Navigation -->
+  <nav id="navbar" class="navbar visible">
+    <div class="nav-content">
+      <a href="index.html" class="logo">
+        <span class="logo-cn">影子</span>
+        <span class="logo-divider">|</span>
+        <span class="logo-en">ShadowLens</span>
+      </a>
+      <div class="nav-links">
+        <a href="explore.html" class="nav-link">发现</a>
+        <a href="categories.html" class="nav-link">分类</a>
+        <a href="rankings.html" class="nav-link">排行榜</a>
+      </div>
+      <div class="nav-right">
+        <div class="lang-switch">
+          <button class="lang-btn active" data-lang="zh">中</button>
+          <span class="lang-divider">/</span>
+          <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+        <a href="search.html" class="search-toggle" id="searchToggle">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </a>
+        <a href="login.html" class="nav-login">登录</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Cover -->
+  <div class="profile-cover" id="profileCover">
+    <div class="profile-cover-overlay"></div>
+  </div>
+
+  <!-- Main Profile -->
+  <div class="profile-main">
+    <div class="profile-card" id="profileCard">
+      <!-- 3D Avatar with Orbiting Text -->
+      <div class="avatar-3d-scene" id="avatarScene">
+        <div class="avatar-3d-container" id="avatar3d">
+          <div class="avatar-center">
+            <img id="profileAvatar" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80" alt="Avatar">
+          </div>
+          <div class="orbit-ring" id="orbitRing1">
+            <div class="orbit-ring-text" id="orbitText1"></div>
+          </div>
+          <div class="orbit-ring orbit-ring-2" id="orbitRing2">
+            <div class="orbit-ring-text" id="orbitText2"></div>
+          </div>
+        </div>
+      </div>
+
+      <h1 class="profile-name" id="profileName">Alex Chen</h1>
+      <p class="profile-handle" id="profileHandle">@alex</p>
+      <p class="profile-bio" id="profileBio">专业风景摄影师，捕捉大自然的壮丽瞬间</p>
+
+      <div class="profile-tags" id="profileTags"></div>
+
+      <div class="profile-stats">
+        <div class="profile-stat">
+          <div class="profile-stat-num" id="statPhotos">156</div>
+          <div class="profile-stat-label">作品</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-num" id="statFollowers">2,345</div>
+          <div class="profile-stat-label">粉丝</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-num" id="statFollowing">89</div>
+          <div class="profile-stat-label">关注</div>
+        </div>
+      </div>
+
+      <!-- Theme Picker -->
+      <div class="theme-picker" id="themePicker">
+        <div class="theme-dot active" data-theme="light" title="明亮"></div>
+        <div class="theme-dot" data-theme="dark" title="暗黑"></div>
+        <div class="theme-dot" data-theme="warm" title="暖调"></div>
+        <div class="theme-dot" data-theme="cool" title="冷调"></div>
+      </div>
+
+      <div class="profile-actions">
+        <button class="btn-primary" id="followBtn">关注</button>
+        <button class="btn-ghost" id="editProfileBtn">编辑资料</button>
+        <a href="post.html" class="btn-ghost" id="newPostBtn" style="display:none;">发布作品</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Works Section -->
+  <div class="profile-section">
+    <h2 class="profile-section-title">作品集</h2>
+    <div class="profile-works-grid" id="worksGrid">
+      <!-- Filled by JS -->
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-card">
+      <h2 class="modal-title">编辑个人资料</h2>
+      <div class="modal-field">
+        <label class="modal-label">昵称</label>
+        <input type="text" class="modal-input" id="editName" placeholder="你的昵称">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">个人介绍</label>
+        <textarea class="modal-textarea" id="editBio" placeholder="写点关于自己的话..." rows="3"></textarea>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">封面图片 URL</label>
+        <input type="text" class="modal-input" id="editCover" placeholder="https://...">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">头像 URL</label>
+        <input type="text" class="modal-input" id="editAvatar" placeholder="https://...">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">个人标签（逗号分隔）</label>
+        <input type="text" class="modal-input" id="editTags" placeholder="风景, 自然, 光影">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="cancelEdit">取消</button>
+        <button class="btn-primary" id="saveEdit">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-logo">
+        <span class="logo-cn">影子</span>
+        <span class="logo-divider">|</span>
+        <span class="logo-en">ShadowLens</span>
+      </div>
+      <div class="footer-links">
+        <a href="explore.html">发现</a>
+        <a href="categories.html">分类</a>
+        <a href="rankings.html">排行榜</a>
+        <a href="login.html">登录</a>
+      </div>
+      <p class="footer-text">发现摄影的艺术</p>
+      <p class="footer-copyright">&copy; 2024 ShadowLens. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/pages.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const authorId = params.get('id');
+
+      // Check if viewing own profile (logged in, no id param or id matches)
+      const currentUser = getCurrentUser();
+      const isOwnProfile = currentUser && (!authorId || authorId === currentUser.email);
+
+      let profileData;
+
+      if (isOwnProfile) {
+        // Load from localStorage
+        const saved = JSON.parse(localStorage.getItem('sl_profile_' + currentUser.email) || '{}');
+        profileData = {
+          name: saved.name || currentUser.name,
+          bio: saved.bio || '这个人很懒，什么都没写...',
+          avatar: saved.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+          cover: saved.cover || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80',
+          theme: saved.theme || 'light',
+          tags: saved.tags || ['摄影'],
+          photos: allPhotos.filter(p => p.authorId === (saved.authorId || 'alex')).length || 12,
+          followers: saved.followers || 234,
+          following: saved.following || 56,
+          authorId: saved.authorId || 'alex'
+        };
+      } else {
+        // Load from photographers data
+        const p = photographers[authorId] || photographers.alex;
+        profileData = {
+          name: p.name,
+          bio: p.bio,
+          avatar: p.avatar,
+          cover: p.cover,
+          theme: p.theme,
+          tags: p.tags,
+          photos: p.photos,
+          followers: p.followers,
+          following: p.following,
+          authorId: authorId
+        };
+      }
+
+      // Apply theme
+      applyTheme(profileData.theme);
+
+      // Render cover
+      const cover = document.getElementById('profileCover');
+      if (cover) {
+        const img = document.createElement('img');
+        img.src = profileData.cover;
+        img.alt = '';
+        cover.insertBefore(img, cover.firstChild);
+      }
+
+      // Render avatar
+      document.getElementById('profileAvatar').src = profileData.avatar;
+
+      // Render orbiting text
+      renderOrbitText('orbitText1', profileData.name + '  ·  ' + (profileData.tags || []).join('  ·  ') + '  ·  ');
+      renderOrbitText('orbitText2', 'ShadowLens  ·  Photography  ·  Art  ·  Light  ·  Shadow  ·  ');
+
+      // Render info
+      document.getElementById('profileName').textContent = profileData.name;
+      document.getElementById('profileHandle').textContent = '@' + profileData.name.toLowerCase().replace(/\s+/g, '');
+      document.getElementById('profileBio').textContent = profileData.bio;
+      document.getElementById('statPhotos').textContent = profileData.photos;
+      document.getElementById('statFollowers').textContent = profileData.followers.toLocaleString();
+      document.getElementById('statFollowing').textContent = profileData.following;
+
+      // Render tags
+      const tagsEl = document.getElementById('profileTags');
+      if (tagsEl && profileData.tags) {
+        tagsEl.innerHTML = profileData.tags.map(t => `<span class="profile-tag">${t}</span>`).join('');
+      }
+
+      // Render works - include user posts + system photos
+      const worksGrid = document.getElementById('worksGrid');
+      if (worksGrid) {
+        let userPosts = [];
+        try { userPosts = JSON.parse(localStorage.getItem('sl_user_posts') || '[]'); } catch(e) {}
+
+        // For own profile, show user posts first
+        let authorPhotos;
+        if (isOwnProfile) {
+          authorPhotos = [...userPosts, ...allPhotos.filter(p => p.authorId === profileData.authorId)];
+        } else {
+          authorPhotos = [
+            ...userPosts.filter(p => p.authorId === currentUser?.email),
+            ...allPhotos.filter(p => p.authorId === profileData.authorId)
+          ];
+        }
+
+        authorPhotos = authorPhotos.slice(0, 12);
+
+        if (authorPhotos.length === 0) {
+          allPhotos.slice(0, 9).forEach(photo => {
+            worksGrid.innerHTML += `
+              <a href="photo.html?id=${photo.id}" class="profile-work-card">
+                <img src="${photo.url}" alt="${photo.title}" loading="lazy">
+                <div class="profile-work-overlay">
+                  <span class="profile-work-title">${photo.title}</span>
+                </div>
+              </a>`;
+          });
+        } else {
+          authorPhotos.forEach(photo => {
+            worksGrid.innerHTML += `
+              <a href="photo.html?id=${photo.id}" class="profile-work-card">
+                <img src="${photo.url}" alt="${photo.title}" loading="lazy">
+                <div class="profile-work-overlay">
+                  <span class="profile-work-title">${photo.title}</span>
+                </div>
+              </a>`;
+          });
+        }
+      }
+
+      // Theme picker
+      document.querySelectorAll('.theme-dot').forEach(dot => {
+        if (dot.dataset.theme === profileData.theme) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+        dot.addEventListener('click', () => {
+          document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+          dot.classList.add('active');
+          applyTheme(dot.dataset.theme);
+          if (isOwnProfile) {
+            saveProfile({ theme: dot.dataset.theme });
+          }
+        });
+      });
+
+      // Follow button
+      const followBtn = document.getElementById('followBtn');
+      if (followBtn) {
+        followBtn.addEventListener('click', () => {
+          const isFollowing = followBtn.textContent === '已关注';
+          followBtn.textContent = isFollowing ? '关注' : '已关注';
+          const statEl = document.getElementById('statFollowers');
+          const current = parseInt(statEl.textContent.replace(/,/g, ''));
+          statEl.textContent = (isFollowing ? current - 1 : current + 1).toLocaleString();
+        });
+      }
+
+      // Edit profile
+      const editBtn = document.getElementById('editProfileBtn');
+      const editModal = document.getElementById('editModal');
+      const cancelBtn = document.getElementById('cancelEdit');
+      const saveBtn = document.getElementById('saveEdit');
+
+      if (editBtn && editModal) {
+        if (!isOwnProfile) {
+          editBtn.style.display = 'none';
+        } else {
+          // Show "New Post" button for own profile
+          const newPostBtn = document.getElementById('newPostBtn');
+          if (newPostBtn) newPostBtn.style.display = 'inline-flex';
+        }
+
+        editBtn.addEventListener('click', () => {
+          document.getElementById('editName').value = profileData.name;
+          document.getElementById('editBio').value = profileData.bio;
+          document.getElementById('editCover').value = profileData.cover;
+          document.getElementById('editAvatar').value = profileData.avatar;
+          document.getElementById('editTags').value = (profileData.tags || []).join(', ');
+          editModal.classList.add('active');
+        });
+
+        cancelBtn.addEventListener('click', () => editModal.classList.remove('active'));
+        editModal.addEventListener('click', (e) => {
+          if (e.target === editModal) editModal.classList.remove('active');
+        });
+
+        saveBtn.addEventListener('click', () => {
+          const newName = document.getElementById('editName').value.trim();
+          const newBio = document.getElementById('editBio').value.trim();
+          const newCover = document.getElementById('editCover').value.trim();
+          const newAvatar = document.getElementById('editAvatar').value.trim();
+          const newTags = document.getElementById('editTags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+          if (newName) {
+            profileData.name = newName;
+            document.getElementById('profileName').textContent = newName;
+            document.getElementById('profileHandle').textContent = '@' + newName.toLowerCase().replace(/\s+/g, '');
+          }
+          if (newBio) {
+            profileData.bio = newBio;
+            document.getElementById('profileBio').textContent = newBio;
+          }
+          if (newCover) {
+            profileData.cover = newCover;
+            const coverImg = document.querySelector('.profile-cover img');
+            if (coverImg) coverImg.src = newCover;
+          }
+          if (newAvatar) {
+            profileData.avatar = newAvatar;
+            document.getElementById('profileAvatar').src = newAvatar;
+          }
+          if (newTags.length > 0) {
+            profileData.tags = newTags;
+            document.getElementById('profileTags').innerHTML = newTags.map(t => `<span class="profile-tag">${t}</span>`).join('');
+          }
+
+          // Update orbit text
+          renderOrbitText('orbitText1', profileData.name + '  ·  ' + (profileData.tags || []).join('  ·  ') + '  ·  ');
+
+          saveProfile(profileData);
+          editModal.classList.remove('active');
+        });
+      }
+
+      // 3D mouse parallax on avatar
+      const scene = document.getElementById('avatarScene');
+      if (scene) {
+        scene.addEventListener('mousemove', (e) => {
+          const rect = scene.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+          const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+          const container = document.getElementById('avatar3d');
+          if (container) {
+            container.style.transform = `rotateY(${x * 15}deg) rotateX(${-y * 15}deg)`;
+          }
+        });
+        scene.addEventListener('mouseleave', () => {
+          const container = document.getElementById('avatar3d');
+          if (container) {
+            container.style.transform = 'rotateY(0deg) rotateX(0deg)';
+          }
+        });
+      }
+
+      // Nav login
+      const navLoginBtn = document.querySelector('.nav-login');
+      if (navLoginBtn && currentUser) {
+        navLoginBtn.textContent = currentUser.name;
+      }
+    });
+
+    function renderOrbitText(containerId, text) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = '';
+      const chars = text.split('');
+      const radius = containerId === 'orbitText2' ? 105 : 100;
+      chars.forEach((char, i) => {
+        const span = document.createElement('span');
+        span.className = 'orbit-char';
+        span.textContent = char;
+        const angle = (360 / chars.length) * i;
+        span.style.transform = `rotate(${angle}deg) translateX(${radius}px)`;
+        container.appendChild(span);
+      });
+    }
+
+    function applyTheme(theme) {
+      const root = document.documentElement;
+      switch (theme) {
+        case 'dark':
+          root.style.setProperty('--color-bg', '#141414');
+          root.style.setProperty('--color-bg-alt', '#1e1e1e');
+          root.style.setProperty('--color-text', '#e8e8e8');
+          root.style.setProperty('--color-text-light', '#aaa');
+          root.style.setProperty('--color-text-muted', '#666');
+          root.style.setProperty('--color-border', '#2a2a2a');
+          break;
+        case 'warm':
+          root.style.setProperty('--color-bg', '#faf5ef');
+          root.style.setProperty('--color-bg-alt', '#f2ebe2');
+          root.style.setProperty('--color-text', '#3a2e22');
+          root.style.setProperty('--color-text-light', '#7a6a55');
+          root.style.setProperty('--color-text-muted', '#a09080');
+          root.style.setProperty('--color-border', '#e0d5c8');
+          break;
+        case 'cool':
+          root.style.setProperty('--color-bg', '#f0f3f7');
+          root.style.setProperty('--color-bg-alt', '#e4e9f0');
+          root.style.setProperty('--color-text', '#1a2a3a');
+          root.style.setProperty('--color-text-light', '#5a7090');
+          root.style.setProperty('--color-text-muted', '#8a9ab0');
+          root.style.setProperty('--color-border', '#d0d8e0');
+          break;
+        default: // light
+          root.style.setProperty('--color-bg', '#fafafa');
+          root.style.setProperty('--color-bg-alt', '#f5f5f5');
+          root.style.setProperty('--color-text', '#1a1a1a');
+          root.style.setProperty('--color-text-light', '#666');
+          root.style.setProperty('--color-text-muted', '#999');
+          root.style.setProperty('--color-border', '#e5e5e5');
+      }
+    }
+
+    function saveProfile(data) {
+      const currentUser = getCurrentUser();
+      if (!currentUser) return;
+      const key = 'sl_profile_' + currentUser.email;
+      const existing = JSON.parse(localStorage.getItem(key) || '{}');
+      const updated = { ...existing, ...data };
+      localStorage.setItem(key, JSON.stringify(updated));
+    }
+
+    function getCurrentUser() {
+      try { return JSON.parse(localStorage.getItem('sl_current_user')); } catch(e) { return null; }
+    }
+  </script>
+</body>
+</html>
