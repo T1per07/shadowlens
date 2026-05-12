@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 | 影子 ShadowLens</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400;600&family=Inter:wght@200;300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav id="navbar" class="navbar visible">
+    <div class="nav-content">
+      <a href="index.html" class="logo">
+        <span class="logo-cn">影子</span>
+        <span class="logo-divider">|</span>
+        <span class="logo-en">ShadowLens</span>
+      </a>
+      <div class="nav-links">
+        <a href="explore.html" class="nav-link">发现</a>
+        <a href="categories.html" class="nav-link">分类</a>
+        <a href="rankings.html" class="nav-link">排行榜</a>
+      </div>
+      <div class="nav-right">
+        <div class="lang-switch">
+          <button class="lang-btn active" data-lang="zh">中</button>
+          <span class="lang-divider">/</span>
+          <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+        <a href="search.html" class="search-toggle" id="searchToggle">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </a>
+        <a href="login.html" class="nav-login" id="navLoginBtn">登录</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Login/Register Form -->
+  <div class="login-container">
+    <div class="login-card" id="authCard">
+      <!-- Login Form -->
+      <div id="loginForm">
+        <div class="login-logo">
+          <span class="logo-cn" style="font-size: 2rem;">影子</span>
+          <br>
+          <span class="logo-en" style="font-size: 0.625rem;">ShadowLens</span>
+        </div>
+        <h1 class="login-title">欢迎回来</h1>
+        <p class="login-subtitle">登录你的账号</p>
+        <div id="loginError" class="login-error"></div>
+        <form class="login-form" id="loginFormEl">
+          <input type="email" class="login-input" id="loginEmail" placeholder="邮箱" required>
+          <input type="password" class="login-input" id="loginPassword" placeholder="密码" required>
+          <button type="submit" class="login-btn">登录</button>
+        </form>
+        <p class="login-link">
+          还没有账号？<a href="#" id="showRegister">立即注册</a>
+        </p>
+      </div>
+
+      <!-- Register Form (hidden by default) -->
+      <div id="registerForm" style="display: none;">
+        <div class="login-logo">
+          <span class="logo-cn" style="font-size: 2rem;">影子</span>
+          <br>
+          <span class="logo-en" style="font-size: 0.625rem;">ShadowLens</span>
+        </div>
+        <h1 class="login-title">创建账号</h1>
+        <p class="login-subtitle">加入摄影社区</p>
+        <div id="registerError" class="login-error"></div>
+        <form class="login-form" id="registerFormEl">
+          <input type="text" class="login-input" id="regName" placeholder="昵称" required>
+          <input type="email" class="login-input" id="regEmail" placeholder="邮箱" required>
+          <input type="password" class="login-input" id="regPassword" placeholder="密码（至少6位）" required minlength="6">
+          <button type="submit" class="login-btn">注册</button>
+        </form>
+        <p class="login-link">
+          已有账号？<a href="#" id="showLogin">返回登录</a>
+        </p>
+      </div>
+
+      <!-- Logged In State (hidden by default) -->
+      <div id="loggedInSection" style="display: none;">
+        <div class="login-logo">
+          <span class="logo-cn" style="font-size: 2rem;">影子</span>
+          <br>
+          <span class="logo-en" style="font-size: 0.625rem;">ShadowLens</span>
+        </div>
+        <div class="profile-3d-wrap">
+          <div class="logged-avatar" id="loggedAvatar">U</div>
+        </div>
+        <h1 class="login-title" id="loggedName">用户</h1>
+        <p class="login-subtitle" id="loggedEmail">user@email.com</p>
+        <div class="logged-stats">
+          <div class="stat-item">
+            <div class="stat-number" id="userPostCount">0</div>
+            <div class="stat-label">发布</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="userTagCount">0</div>
+            <div class="stat-label">自建标签</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="userLikeCount">0</div>
+            <div class="stat-label">点赞</div>
+          </div>
+        </div>
+        <div class="logged-actions">
+          <a href="post.html" class="login-btn" style="text-decoration:none; display:block; text-align:center; margin-bottom: 0.75rem;">发布作品</a>
+          <a href="photographer.html" class="login-btn" style="text-decoration:none; display:block; text-align:center; background: transparent; color: var(--color-text); border: 1px solid var(--color-border); margin-bottom: 0.75rem;">我的主页</a>
+          <button class="login-btn" id="logoutBtn" style="background: transparent; color: var(--color-text); border: 1px solid var(--color-border);">退出登录</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-logo">
+        <span class="logo-cn">影子</span>
+        <span class="logo-divider">|</span>
+        <span class="logo-en">ShadowLens</span>
+      </div>
+      <div class="footer-links">
+        <a href="explore.html">发现</a>
+        <a href="categories.html">分类</a>
+        <a href="rankings.html">排行榜</a>
+        <a href="login.html">登录</a>
+      </div>
+      <p class="footer-text">发现摄影的艺术</p>
+      <p class="footer-copyright">&copy; 2024 ShadowLens. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Auth System
+    function getUsers() {
+      try { return JSON.parse(localStorage.getItem('sl_users') || '[]'); } catch(e) { return []; }
+    }
+
+    function saveUsers(users) {
+      localStorage.setItem('sl_users', JSON.stringify(users));
+    }
+
+    function getCurrentUser() {
+      try { return JSON.parse(localStorage.getItem('sl_current_user')); } catch(e) { return null; }
+    }
+
+    function setCurrentUser(user) {
+      localStorage.setItem('sl_current_user', JSON.stringify(user));
+    }
+
+    function logout() {
+      localStorage.removeItem('sl_current_user');
+      showAuthForms();
+      updateNavLogin();
+    }
+
+    function updateNavLogin() {
+      const user = getCurrentUser();
+      const navBtn = document.getElementById('navLoginBtn');
+      if (navBtn) {
+        navBtn.textContent = user ? user.name : '登录';
+      }
+    }
+
+    function showAuthForms() {
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('loggedInSection').style.display = 'none';
+    }
+
+    function showLoggedIn(user) {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('loggedInSection').style.display = 'block';
+
+      document.getElementById('loggedName').textContent = user.name;
+      document.getElementById('loggedEmail').textContent = user.email;
+      document.getElementById('loggedAvatar').textContent = user.name.charAt(0).toUpperCase();
+
+      // Count user posts
+      const userPosts = JSON.parse(localStorage.getItem('sl_user_posts') || '[]');
+      document.getElementById('userPostCount').textContent = userPosts.length;
+
+      // Count user tags
+      const userTags = JSON.parse(localStorage.getItem('sl_user_tags') || '{}');
+      const tagCount = Object.keys(userTags).length;
+      document.getElementById('userTagCount').textContent = tagCount;
+
+      // Count likes
+      const likes = JSON.parse(localStorage.getItem('sl_user_likes') || '[]');
+      document.getElementById('userLikeCount').textContent = likes.length;
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = getCurrentUser();
+      if (user) {
+        showLoggedIn(user);
+      }
+      updateNavLogin();
+
+      // Toggle forms
+      document.getElementById('showRegister').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('registerForm').style.display = 'block';
+      });
+
+      document.getElementById('showLogin').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('loginForm').style.display = 'block';
+        document.getElementById('registerForm').style.display = 'none';
+      });
+
+      // Login
+      document.getElementById('loginFormEl').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const users = getUsers();
+        const user = users.find(u => u.email === email && u.password === password);
+
+        if (user) {
+          setCurrentUser(user);
+          showLoggedIn(user);
+          updateNavLogin();
+          document.getElementById('loginError').textContent = '';
+        } else {
+          document.getElementById('loginError').textContent = '邮箱或密码错误';
+        }
+      });
+
+      // Register
+      document.getElementById('registerFormEl').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('regName').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        const users = getUsers();
+
+        if (users.find(u => u.email === email)) {
+          document.getElementById('registerError').textContent = '该邮箱已注册';
+          return;
+        }
+
+        const newUser = { name, email, password, createdAt: new Date().toISOString() };
+        users.push(newUser);
+        saveUsers(users);
+        setCurrentUser(newUser);
+        showLoggedIn(newUser);
+        updateNavLogin();
+        document.getElementById('registerError').textContent = '';
+      });
+
+      // Logout
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+    });
+  </script>
+</body>
+</html>
