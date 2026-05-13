@@ -39,6 +39,17 @@
 
   <!-- Category Hero -->
   <div class="category-hero" id="categoryHero">
+    <div class="light-rays"></div>
+    <div class="bokeh-container">
+      <div class="bokeh"></div>
+      <div class="bokeh"></div>
+      <div class="bokeh"></div>
+      <div class="bokeh"></div>
+      <div class="bokeh"></div>
+    </div>
+    <div class="lens-flare"></div>
+    <div class="light-leak"></div>
+    <div class="hero-spotlight" id="heroSpotlight"></div>
     <div class="category-hero-content">
       <h1 class="category-hero-title" id="catTitle">风景</h1>
       <p class="category-hero-subtitle" id="catSubtitle">Landscape</p>
@@ -74,6 +85,23 @@
   </footer>
 
   <script src="js/pages.js"></script>
-  <script>initCategoryPage();</script>
+  <script>
+    initCategoryPage();
+
+    // Hero Spotlight Effect
+    (function() {
+      const hero = document.getElementById('categoryHero');
+      const spotlight = document.getElementById('heroSpotlight');
+      if (!hero || !spotlight) return;
+
+      hero.addEventListener('mousemove', (e) => {
+        const rect = hero.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        spotlight.style.setProperty('--spot-x', x + '%');
+        spotlight.style.setProperty('--spot-y', y + '%');
+      });
+    })();
+  </script>
 </body>
 </html>

@@ -833,7 +833,9 @@ function initExplorePage() {
     tabsContainer.innerHTML = tabsHtml;
   }
 
-  allDisplayPhotos.forEach(photo => {
+  // Show initial batch (12 photos)
+  const initialBatch = allDisplayPhotos.slice(0, 12);
+  initialBatch.forEach(photo => {
     grid.innerHTML += createPhotoCard(photo);
   });
 
@@ -882,10 +884,11 @@ function initCategoryPage() {
   const subFilter = params.get('sub');
   const catData = categoryHierarchy[category];
 
-  // Update hero
+  // Set category theme on body and hero
+  document.body.dataset.category = category;
   const hero = document.getElementById('categoryHero');
   if (hero && catData) {
-    hero.dataset.cat = category;
+    hero.dataset.category = category;
     const titleEl = document.getElementById('catTitle');
     const subtitleEl = document.getElementById('catSubtitle');
     const descEl = document.getElementById('catDesc');
@@ -1072,11 +1075,24 @@ function initPhotoPage() {
     `<a href="tags.html?tag=${encodeURIComponent(tag)}" class="tag">${tag}</a>`
   ).join('');
   const userTagsHtml = renderUserTags(photoId);
-
   const user = getCurrentUser();
 
+  // Related works (same category, different photo)
+  const related = allSearchable.filter(p => p.category === photo.category && p.id !== photo.id).slice(0, 4);
+  const relatedHtml = related.map(p => `
+    <a href="photo.html?id=${p.id}" class="related-card">
+      <img src="${p.url}" alt="${p.title}" loading="lazy">
+      <div class="related-card-overlay">
+        <span class="related-card-title">${p.title}</span>
+      </div>
+    </a>
+  `).join('');
+
+  // Simulated comments
+  const comments = getSimulatedComments(photoId);
+
   detail.innerHTML = `
-    <img src="${photo.url}" alt="${photo.title}" class="photo-detail-img">
+    <img src="${photo.url}" alt="${photo.title}" class="photo-detail-img" id="mainPhotoImg">
     <div class="photo-detail-info">
       <div>
         <h1 class="photo-detail-title">${photo.title}</h1>
@@ -1086,14 +1102,14 @@ function initPhotoPage() {
         ${photo.description ? `<p class="photo-detail-desc">${photo.description}</p>` : ''}
       </div>
       <div class="photo-detail-stats">
-        <span>${icons.heart} ${photo.likes.toLocaleString()} 点赞</span>
+        <span>${icons.heart} <span id="likeCount">${photo.likes.toLocaleString()}</span> 点赞</span>
         <span>${icons.eye} ${photo.views.toLocaleString()} 浏览</span>
       </div>
     </div>
     <div class="photo-detail-actions">
-      <button class="action-btn like-btn">${icons.heart} 点赞</button>
+      <button class="action-btn like-btn like-burst">${icons.heart} 点赞</button>
       <button class="action-btn bookmark-btn">${icons.bookmark} 收藏</button>
-      <button class="action-btn">${icons.share} 分享</button>
+      <button class="action-btn share-btn">${icons.share} 分享</button>
     </div>
     <div class="photo-detail-tags">
       ${tagsHtml}${userTagsHtml}
@@ -1114,34 +1130,159 @@ function initPhotoPage() {
       ${photo.camera ? `<p>相机：${photo.camera}</p>` : ''}
       <p>上传时间：${photo.date || '2024年1月15日'}</p>
     </div>
+
+    <!-- Comments Section -->
+    <div class="comments-section">
+      <div class="comments-header">
+        <h3 class="comments-title">评论</h3>
+        <span class="comments-count">${comments.length}</span>
+      </div>
+      <div id="commentsList">
+        ${comments.map((c, i) => renderComment(c, i)).join('')}
+      </div>
+      ${user ? `
+        <div class="comment-input-wrap">
+          <input type="text" class="comment-input" id="commentInput" placeholder="写下你的评论..." maxlength="200">
+          <button class="comment-submit" id="commentSubmit">发送</button>
+        </div>
+      ` : `
+        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 1.5rem; text-align: center;">
+          <a href="login.html" style="color: var(--color-text); text-decoration: none;">登录</a> 后可评论
+        </p>
+      `}
+    </div>
+
+    <!-- Related Works -->
+    ${related.length > 0 ? `
+      <div class="related-section">
+        <h3 class="related-title">相关作品</h3>
+        <div class="related-grid">
+          ${relatedHtml}
+        </div>
+      </div>
+    ` : ''}
   `;
 
-  // Like button
-  const likeBtn = detail.querySelector('.like-btn');
-  if (likeBtn) {
-    likeBtn.addEventListener('click', () => {
-      likeBtn.classList.toggle('liked');
-      likeBtn.innerHTML = likeBtn.classList.contains('liked')
-        ? `${icons.heartFill} 已点赞`
-        : `${icons.heart} 点赞`;
+  // Lightbox
+  const mainImg = document.getElementById('mainPhotoImg');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxClose = document.getElementById('lightboxClose');
+
+  if (mainImg && lightbox) {
+    mainImg.addEventListener('click', () => {
+      lightboxImg.src = photo.url;
+      lightbox.classList.add('active');
+    });
+    lightboxClose.addEventListener('click', () => lightbox.classList.remove('active'));
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) lightbox.classList.remove('active');
     });
   }
 
-  // Bookmark button
+  // Like button with persistence
+  const likeBtn = detail.querySelector('.like-btn');
+  if (likeBtn) {
+    // Restore liked state from localStorage
+    let likedPhotos = [];
+    try { likedPhotos = JSON.parse(localStorage.getItem('sl_liked_photos') || '[]'); } catch(e) {}
+    if (likedPhotos.includes(photoId)) {
+      likeBtn.classList.add('liked');
+      likeBtn.innerHTML = `${icons.heartFill} 已点赞`;
+    }
+
+    likeBtn.addEventListener('click', () => {
+      let likedPhotos = [];
+      try { likedPhotos = JSON.parse(localStorage.getItem('sl_liked_photos') || '[]'); } catch(e) {}
+      const isLiked = likedPhotos.includes(photoId);
+
+      if (isLiked) {
+        likedPhotos = likedPhotos.filter(id => id !== photoId);
+        likeBtn.classList.remove('liked');
+        likeBtn.innerHTML = `${icons.heart} 点赞`;
+      } else {
+        likedPhotos.push(photoId);
+        likeBtn.classList.add('liked');
+        likeBtn.innerHTML = `${icons.heartFill} 已点赞`;
+      }
+      localStorage.setItem('sl_liked_photos', JSON.stringify(likedPhotos));
+
+      likeBtn.classList.add('active');
+      setTimeout(() => likeBtn.classList.remove('active'), 600);
+    });
+  }
+
+  // Bookmark button with persistence
   const bookmarkBtn = detail.querySelector('.bookmark-btn');
   if (bookmarkBtn) {
+    // Restore bookmarked state from localStorage
+    let bookmarkedPhotos = [];
+    try { bookmarkedPhotos = JSON.parse(localStorage.getItem('sl_bookmarked_photos') || '[]'); } catch(e) {}
+    if (bookmarkedPhotos.includes(photoId)) {
+      bookmarkBtn.classList.add('liked');
+      bookmarkBtn.innerHTML = `${icons.bookmark} 已收藏`;
+    }
+
     bookmarkBtn.addEventListener('click', () => {
-      bookmarkBtn.classList.toggle('liked');
-      bookmarkBtn.innerHTML = bookmarkBtn.classList.contains('liked')
-        ? `${icons.bookmark} 已收藏`
-        : `${icons.bookmark} 收藏`;
+      let bookmarkedPhotos = [];
+      try { bookmarkedPhotos = JSON.parse(localStorage.getItem('sl_bookmarked_photos') || '[]'); } catch(e) {}
+      const isBookmarked = bookmarkedPhotos.includes(photoId);
+
+      if (isBookmarked) {
+        bookmarkedPhotos = bookmarkedPhotos.filter(id => id !== photoId);
+        bookmarkBtn.classList.remove('liked');
+        bookmarkBtn.innerHTML = `${icons.bookmark} 收藏`;
+      } else {
+        bookmarkedPhotos.push(photoId);
+        bookmarkBtn.classList.add('liked');
+        bookmarkBtn.innerHTML = `${icons.bookmark} 已收藏`;
+      }
+      localStorage.setItem('sl_bookmarked_photos', JSON.stringify(bookmarkedPhotos));
+    });
+  }
+
+  // Share button
+  const shareBtn = detail.querySelector('.share-btn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', () => {
+      if (navigator.share) {
+        navigator.share({ title: photo.title, url: window.location.href });
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        shareBtn.innerHTML = `${icons.share} 已复制链接`;
+        setTimeout(() => shareBtn.innerHTML = `${icons.share} 分享`, 2000);
+      }
+    });
+  }
+
+  // Comment submit
+  const commentInput = document.getElementById('commentInput');
+  const commentSubmit = document.getElementById('commentSubmit');
+  if (commentInput && commentSubmit) {
+    const doComment = () => {
+      const text = commentInput.value.trim();
+      if (!text) return;
+      const newComment = {
+        author: user.name,
+        text: text,
+        time: '刚刚'
+      };
+      comments.push(newComment);
+      saveComments(photoId, comments);
+      const list = document.getElementById('commentsList');
+      list.innerHTML += renderComment(newComment, comments.length - 1);
+      commentInput.value = '';
+      document.querySelector('.comments-count').textContent = comments.length;
+    };
+    commentSubmit.addEventListener('click', doComment);
+    commentInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doComment();
     });
   }
 
   // Add user tag
   const addTagBtn = document.getElementById('addTagBtn');
   const tagInput = document.getElementById('userTagInput');
-
   if (addTagBtn && tagInput) {
     const doAddTag = () => {
       const tag = tagInput.value.trim();
@@ -1151,7 +1292,6 @@ function initPhotoPage() {
         refreshTags(photoId, detail);
       }
     };
-
     addTagBtn.addEventListener('click', doAddTag);
     tagInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') doAddTag();
@@ -1166,6 +1306,46 @@ function initPhotoPage() {
       refreshTags(photoId, detail);
     }
   });
+}
+
+// Simulated comments data
+function getSimulatedComments(photoId) {
+  const stored = localStorage.getItem('sl_comments_' + photoId);
+  if (stored) {
+    try { return JSON.parse(stored); } catch(e) {}
+  }
+  // Default simulated comments
+  const defaults = [
+    { author: 'Sarah Kim', text: '光影的处理太棒了，构图非常精妙', time: '2小时前' },
+    { author: 'Mike Johnson', text: '这个角度很独特，学到了', time: '5小时前' },
+    { author: 'Emily Brown', text: '色彩很有层次感，喜欢这种调子', time: '1天前' },
+    { author: 'David Wilson', text: '拍摄时机把握得真好', time: '2天前' }
+  ];
+  return defaults;
+}
+
+function saveComments(photoId, comments) {
+  localStorage.setItem('sl_comments_' + photoId, JSON.stringify(comments));
+}
+
+function renderComment(comment, index) {
+  const initial = comment.author.charAt(0);
+  return `
+    <div class="comment-item" style="animation-delay: ${index * 0.05}s">
+      <div class="comment-avatar">${initial}</div>
+      <div class="comment-body">
+        <div class="comment-meta">
+          <span class="comment-author">${comment.author}</span>
+          <span class="comment-time">${comment.time}</span>
+        </div>
+        <div class="comment-text">${comment.text}</div>
+        <div class="comment-actions">
+          <button class="comment-action">${icons.heart} 赞</button>
+          <button class="comment-action">回复</button>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function refreshTags(photoId, detail) {
@@ -1341,7 +1521,35 @@ function initPhotographerPage() {
   const params = new URLSearchParams(window.location.search);
   const authorId = params.get('id') || 'alex';
 
-  const photographer = photographers[authorId] || photographers.alex;
+  // Include user posts for stats calculation
+  let userPosts = [];
+  try { userPosts = JSON.parse(localStorage.getItem('sl_user_posts') || '[]'); } catch(e) {}
+
+  let photographer = photographers[authorId];
+
+  // If not in hardcoded list, build dynamic profile from user posts
+  if (!photographer) {
+    const userPhotos = userPosts.filter(p => p.authorId === authorId);
+    if (userPhotos.length > 0) {
+      photographer = {
+        name: userPhotos[0].author,
+        bio: '社区摄影师',
+        photos: userPhotos.length,
+        followers: 0, following: 0,
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+        cover: userPhotos[0]?.url || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80',
+        theme: 'light',
+        tags: [...new Set(userPhotos.flatMap(p => p.tags || []))].slice(0, 5)
+      };
+    } else {
+      photographer = photographers.alex;
+    }
+  }
+
+  // Compute actual photo count including user posts
+  const allAuthorPhotos = [...userPosts, ...allPhotos].filter(p => p.authorId === authorId);
+  const actualPhotoCount = allAuthorPhotos.length;
+
   const isDark = photographer.theme === 'dark';
 
   const header = document.getElementById('photographerHeader');
@@ -1365,7 +1573,7 @@ function initPhotographerPage() {
       <div class="photographer-tags">${tagsHtml}</div>
       <div class="photographer-stats">
         <div class="stat-item">
-          <div class="stat-number">${photographer.photos}</div>
+          <div class="stat-number">${actualPhotoCount}</div>
           <div class="stat-label">作品</div>
         </div>
         <div class="stat-item">
@@ -1378,7 +1586,7 @@ function initPhotographerPage() {
         </div>
       </div>
       <div class="photographer-actions">
-        <button class="follow-btn" onclick="this.textContent = this.textContent === '关注' ? '已关注' : '关注'">关注</button>
+        <button class="follow-btn" id="followBtn">关注</button>
         <div class="layout-switch">
           <button class="layout-btn active" data-layout="grid" onclick="switchLayout('grid')">${icons.grid}</button>
           <button class="layout-btn" data-layout="list" onclick="switchLayout('list')">${icons.list}</button>
@@ -1390,12 +1598,39 @@ function initPhotographerPage() {
   const grid = document.getElementById('photoGrid');
   if (!grid) return;
 
-  const photographerPhotos = allPhotos.filter(p => p.authorId === authorId);
-  photographerPhotos.forEach(photo => {
+  allAuthorPhotos.forEach(photo => {
     grid.innerHTML += createPhotoCard(photo);
   });
 
   initPhotoCardEvents();
+
+  // Follow button with persistence
+  const followBtn = document.getElementById('followBtn');
+  if (followBtn) {
+    let followedPhotographers = [];
+    try { followedPhotographers = JSON.parse(localStorage.getItem('sl_followed') || '[]'); } catch(e) {}
+    if (followedPhotographers.includes(authorId)) {
+      followBtn.textContent = '已关注';
+      followBtn.classList.add('followed');
+    }
+
+    followBtn.addEventListener('click', () => {
+      let followed = [];
+      try { followed = JSON.parse(localStorage.getItem('sl_followed') || '[]'); } catch(e) {}
+      const isFollowing = followed.includes(authorId);
+
+      if (isFollowing) {
+        followed = followed.filter(id => id !== authorId);
+        followBtn.textContent = '关注';
+        followBtn.classList.remove('followed');
+      } else {
+        followed.push(authorId);
+        followBtn.textContent = '已关注';
+        followBtn.classList.add('followed');
+      }
+      localStorage.setItem('sl_followed', JSON.stringify(followed));
+    });
+  }
 }
 
 function switchLayout(layout) {
@@ -1421,8 +1656,11 @@ function createPhotoCard(photo) {
     <a href="photo.html?id=${photo.id}" class="photo-card">
       <img src="${photo.url}" alt="${photo.title}" loading="lazy" style="aspect-ratio: ${photo.aspect}; object-fit: cover;">
       <div class="photo-overlay">
-        <div class="photo-title">${photo.title}</div>
-        <div class="photo-author">${photo.author}</div>
+        <div class="photo-info">
+          <div class="photo-title">${photo.title}</div>
+          <div class="photo-author">${photo.author}</div>
+        </div>
+        <div class="photo-likes">${icons.heart} ${photo.likes.toLocaleString()}</div>
       </div>
     </a>
   `;

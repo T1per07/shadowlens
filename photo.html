@@ -19,14 +19,20 @@
       max-height: 80vh;
       object-fit: contain;
       margin-bottom: 3rem;
+      cursor: zoom-in;
+      transition: transform 0.3s ease;
+      border-radius: 4px;
+    }
+    .photo-detail-img:hover {
+      transform: scale(1.01);
     }
     .photo-detail-info {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 3rem;
-      padding-bottom: 3rem;
-      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 2rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
     }
     .photo-detail-title {
       font-family: var(--font-serif);
@@ -46,11 +52,23 @@
     .photo-detail-author a:hover {
       text-decoration: underline;
     }
+    .photo-detail-desc {
+      font-family: var(--font-serif);
+      font-size: 0.95rem;
+      color: var(--color-text-light);
+      margin-top: 0.75rem;
+      line-height: 1.8;
+    }
     .photo-detail-stats {
       display: flex;
       gap: 2rem;
       font-size: 0.875rem;
       color: var(--color-text-muted);
+    }
+    .photo-detail-stats span {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
     }
     .photo-detail-actions {
       display: flex;
@@ -59,23 +77,64 @@
     }
     .action-btn {
       font-family: var(--font-sans);
-      font-size: 0.875rem;
-      padding: 0.75rem 1.5rem;
-      border: 1px solid var(--color-border);
-      background: none;
+      font-size: 0.8rem;
+      padding: 0.8rem 1.8rem;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: transparent;
       color: var(--color-text);
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.4s var(--transition-smooth);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-radius: 50px;
+      position: relative;
+      overflow: hidden;
+    }
+    .action-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s var(--transition-smooth);
+      z-index: -1;
+      border-radius: 50px;
     }
     .action-btn:hover {
-      background: var(--color-text);
-      color: var(--color-bg);
+      color: #fff;
+      border-color: var(--color-accent);
+      box-shadow: 0 0 20px rgba(139,115,85,0.2);
+      transform: translateY(-2px);
+    }
+    .action-btn:hover::before {
+      transform: scaleX(1);
+    }
+    .action-btn.liked {
+      background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light));
+      color: #fff;
+      border-color: var(--color-accent);
+      box-shadow: 0 0 20px rgba(139,115,85,0.3);
+    }
+    .photo-detail-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
     }
     .photo-detail-meta {
       margin-top: 2rem;
       font-size: 0.875rem;
       color: var(--color-text-muted);
       line-height: 2;
+    }
+    .photo-detail-meta p {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     @media (max-width: 768px) {
       .photo-detail {
@@ -89,6 +148,9 @@
   </style>
 </head>
 <body>
+  <!-- Noise overlay -->
+  <div class="noise-overlay"></div>
+
   <!-- Navigation -->
   <nav id="navbar" class="navbar visible">
     <div class="nav-content">
@@ -121,6 +183,14 @@
     <!-- Content will be loaded dynamically -->
   </div>
 
+  <!-- Lightbox -->
+  <div class="lightbox-overlay" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <img src="" alt="" id="lightboxImg">
+  </div>
+
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-content">
@@ -136,7 +206,7 @@
         <a href="login.html">登录</a>
       </div>
       <p class="footer-text">发现摄影的艺术</p>
-      <p class="footer-copyright">© 2024 ShadowLens. All rights reserved.</p>
+      <p class="footer-copyright">&copy; 2024 ShadowLens. All rights reserved.</p>
     </div>
   </footer>
 

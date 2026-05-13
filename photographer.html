@@ -108,6 +108,14 @@
     </div>
   </div>
 
+  <!-- Activity Feed -->
+  <div class="profile-section" style="max-width: 800px; margin: 0 auto; padding: 2rem 3rem 4rem;">
+    <h2 class="profile-section-title">动态</h2>
+    <div class="activity-feed" id="activityFeed">
+      <!-- Filled by JS -->
+    </div>
+  </div>
+
   <!-- Edit Modal -->
   <div class="modal-overlay" id="editModal">
     <div class="modal-card">
@@ -121,12 +129,33 @@
         <textarea class="modal-textarea" id="editBio" placeholder="写点关于自己的话..." rows="3"></textarea>
       </div>
       <div class="modal-field">
-        <label class="modal-label">封面图片 URL</label>
-        <input type="text" class="modal-input" id="editCover" placeholder="https://...">
+        <label class="modal-label">封面图片</label>
+        <div class="upload-zone" id="coverUploadZone">
+          <input type="file" class="upload-file-input" id="coverFileInput" accept="image/*">
+          <div class="upload-preview" id="coverPreview">
+            <img id="coverPreviewImg" src="" alt="">
+          </div>
+          <div class="upload-placeholder" id="coverPlaceholder">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            <span>点击上传或拖拽图片</span>
+            <span class="upload-hint">支持 JPG、PNG、GIF、WebP，最大 50MB</span>
+          </div>
+        </div>
+        <input type="text" class="modal-input" id="editCover" placeholder="或输入图片 URL" style="margin-top:0.5rem;">
       </div>
       <div class="modal-field">
-        <label class="modal-label">头像 URL</label>
-        <input type="text" class="modal-input" id="editAvatar" placeholder="https://...">
+        <label class="modal-label">头像</label>
+        <div class="upload-zone avatar-upload-zone" id="avatarUploadZone">
+          <input type="file" class="upload-file-input" id="avatarFileInput" accept="image/*">
+          <div class="upload-preview avatar-preview" id="avatarPreview">
+            <img id="avatarPreviewImg" src="" alt="">
+          </div>
+          <div class="upload-placeholder" id="avatarPlaceholder">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>点击上传头像</span>
+          </div>
+        </div>
+        <input type="text" class="modal-input" id="editAvatar" placeholder="或输入头像 URL" style="margin-top:0.5rem;">
       </div>
       <div class="modal-field">
         <label class="modal-label">个人标签（逗号分隔）</label>
@@ -247,10 +276,13 @@
           authorPhotos = [...userPosts, ...allPhotos.filter(p => p.authorId === profileData.authorId)];
         } else {
           authorPhotos = [
-            ...userPosts.filter(p => p.authorId === currentUser?.email),
+            ...userPosts.filter(p => p.authorId === (profileData.authorId || authorId)),
             ...allPhotos.filter(p => p.authorId === profileData.authorId)
           ];
         }
+
+        // Update photo count to reflect actual posts
+        document.getElementById('statPhotos').textContent = authorPhotos.length;
 
         authorPhotos = authorPhotos.slice(0, 12);
 
@@ -277,6 +309,32 @@
         }
       }
 
+      // Activity Feed
+      const activityFeed = document.getElementById('activityFeed');
+      if (activityFeed) {
+        const activities = [
+          { icon: 'heart', text: '赞了作品《山巅之上》', time: '2小时前' },
+          { icon: 'tag', text: '添加了标签「光影」', time: '5小时前' },
+          { icon: 'camera', text: '发布了新作品《晨雾森林》', time: '1天前' },
+          { icon: 'eye', text: '浏览了作品《海的呼吸》', time: '2天前' },
+          { icon: 'bookmark', text: '收藏了作品《星空》', time: '3天前' }
+        ];
+        const iconSvgs = {
+          heart: icons.heart,
+          tag: icons.tag,
+          camera: icons.camera,
+          eye: icons.eye,
+          bookmark: icons.bookmark
+        };
+        activityFeed.innerHTML = activities.map(a => `
+          <div class="activity-item">
+            <div class="activity-icon">${iconSvgs[a.icon] || icons.heart}</div>
+            <span>${a.text}</span>
+            <span class="activity-time">${a.time}</span>
+          </div>
+        `).join('');
+      }
+
       // Theme picker
       document.querySelectorAll('.theme-dot').forEach(dot => {
         if (dot.dataset.theme === profileData.theme) {
@@ -294,12 +352,33 @@
         });
       });
 
-      // Follow button
+      // Follow button with persistence
       const followBtn = document.getElementById('followBtn');
       if (followBtn) {
+        let followed = [];
+        try { followed = JSON.parse(localStorage.getItem('sl_followed') || '[]'); } catch(e) {}
+        const targetId = profileData.authorId || authorId;
+        if (followed.includes(targetId)) {
+          followBtn.textContent = '已关注';
+          followBtn.classList.add('followed');
+        }
+
         followBtn.addEventListener('click', () => {
-          const isFollowing = followBtn.textContent === '已关注';
-          followBtn.textContent = isFollowing ? '关注' : '已关注';
+          let followed = [];
+          try { followed = JSON.parse(localStorage.getItem('sl_followed') || '[]'); } catch(e) {}
+          const isFollowing = followed.includes(targetId);
+
+          if (isFollowing) {
+            followed = followed.filter(id => id !== targetId);
+            followBtn.textContent = '关注';
+            followBtn.classList.remove('followed');
+          } else {
+            followed.push(targetId);
+            followBtn.textContent = '已关注';
+            followBtn.classList.add('followed');
+          }
+          localStorage.setItem('sl_followed', JSON.stringify(followed));
+
           const statEl = document.getElementById('statFollowers');
           const current = parseInt(statEl.textContent.replace(/,/g, ''));
           statEl.textContent = (isFollowing ? current - 1 : current + 1).toLocaleString();
@@ -327,7 +406,66 @@
           document.getElementById('editCover').value = profileData.cover;
           document.getElementById('editAvatar').value = profileData.avatar;
           document.getElementById('editTags').value = (profileData.tags || []).join(', ');
+
+          // Reset upload zones
+          let uploadedCover = null;
+          let uploadedAvatar = null;
+          ['coverUploadZone', 'avatarUploadZone'].forEach(id => {
+            const zone = document.getElementById(id);
+            if (zone) zone.classList.remove('has-file');
+          });
+          document.getElementById('coverPreviewImg').src = '';
+          document.getElementById('avatarPreviewImg').src = '';
+
           editModal.classList.add('active');
+        });
+
+        // File upload handling
+        function setupUploadZone(zoneId, fileInputId, previewImgId, onFileRead) {
+          const zone = document.getElementById(zoneId);
+          const fileInput = document.getElementById(fileInputId);
+          const previewImg = document.getElementById(previewImgId);
+          if (!zone || !fileInput) return;
+
+          fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 50 * 1024 * 1024) { alert('图片大小不能超过 50MB'); return; }
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              previewImg.src = ev.target.result;
+              zone.classList.add('has-file');
+              onFileRead(ev.target.result);
+            };
+            reader.readAsDataURL(file);
+          });
+
+          zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+          zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+          zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+              const reader = new FileReader();
+              reader.onload = (ev) => {
+                previewImg.src = ev.target.result;
+                zone.classList.add('has-file');
+                onFileRead(ev.target.result);
+              };
+              reader.readAsDataURL(file);
+            }
+          });
+        }
+
+        let uploadedCover = null;
+        let uploadedAvatar = null;
+
+        setupUploadZone('coverUploadZone', 'coverFileInput', 'coverPreviewImg', (dataUrl) => {
+          uploadedCover = dataUrl;
+        });
+        setupUploadZone('avatarUploadZone', 'avatarFileInput', 'avatarPreviewImg', (dataUrl) => {
+          uploadedAvatar = dataUrl;
         });
 
         cancelBtn.addEventListener('click', () => editModal.classList.remove('active'));
@@ -338,8 +476,8 @@
         saveBtn.addEventListener('click', () => {
           const newName = document.getElementById('editName').value.trim();
           const newBio = document.getElementById('editBio').value.trim();
-          const newCover = document.getElementById('editCover').value.trim();
-          const newAvatar = document.getElementById('editAvatar').value.trim();
+          const newCoverUrl = document.getElementById('editCover').value.trim();
+          const newAvatarUrl = document.getElementById('editAvatar').value.trim();
           const newTags = document.getElementById('editTags').value.split(',').map(t => t.trim()).filter(Boolean);
 
           if (newName) {
@@ -351,15 +489,18 @@
             profileData.bio = newBio;
             document.getElementById('profileBio').textContent = newBio;
           }
-          if (newCover) {
-            profileData.cover = newCover;
-            const coverImg = document.querySelector('.profile-cover img');
-            if (coverImg) coverImg.src = newCover;
-          }
-          if (newAvatar) {
-            profileData.avatar = newAvatar;
-            document.getElementById('profileAvatar').src = newAvatar;
-          }
+
+          // Cover: uploaded file takes priority, then URL input
+          const finalCover = uploadedCover || newCoverUrl || profileData.cover;
+          profileData.cover = finalCover;
+          const coverImg = document.querySelector('.profile-cover img');
+          if (coverImg) coverImg.src = finalCover;
+
+          // Avatar: uploaded file takes priority, then URL input
+          const finalAvatar = uploadedAvatar || newAvatarUrl || profileData.avatar;
+          profileData.avatar = finalAvatar;
+          document.getElementById('profileAvatar').src = finalAvatar;
+
           if (newTags.length > 0) {
             profileData.tags = newTags;
             document.getElementById('profileTags').innerHTML = newTags.map(t => `<span class="profile-tag">${t}</span>`).join('');
@@ -369,6 +510,8 @@
           renderOrbitText('orbitText1', profileData.name + '  ·  ' + (profileData.tags || []).join('  ·  ') + '  ·  ');
 
           saveProfile(profileData);
+          uploadedCover = null;
+          uploadedAvatar = null;
           editModal.classList.remove('active');
         });
       }

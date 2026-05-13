@@ -39,6 +39,12 @@
 
   <!-- Vintage Header -->
   <div class="vintage-header">
+    <div class="light-rays"></div>
+    <div class="bokeh-container">
+      <div class="bokeh"></div>
+      <div class="bokeh"></div>
+      <div class="bokeh"></div>
+    </div>
     <h1 class="page-title">老照片</h1>
     <p class="page-subtitle">Vintage</p>
   </div>
@@ -70,6 +76,9 @@
   </footer>
 
   <script src="js/pages.js"></script>
-  <script>initVintagePage();</script>
+  <script>
+    document.body.dataset.category = 'vintage';
+    initVintagePage();
+  </script>
 </body>
 </html>

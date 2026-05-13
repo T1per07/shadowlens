@@ -191,16 +191,43 @@ function initGallery() {
   const masonry = document.getElementById('masonry');
   const isZh = document.documentElement.lang === 'zh-CN';
 
+  // Merge user posts with system photos
+  let userPosts = [];
+  try { userPosts = JSON.parse(localStorage.getItem('sl_user_posts') || '[]'); } catch(e) {}
+
+  // Render user posts first with full card features (links, likes)
+  userPosts.forEach((photo, index) => {
+    const card = document.createElement('div');
+    card.className = 'photo-card reveal';
+    card.style.transitionDelay = `${index * 0.05}s`;
+    card.innerHTML = `
+      <a href="photo.html?id=${photo.id}" style="display:block; text-decoration:none; color:inherit;">
+        <img src="${photo.url}" alt="${photo.title}" loading="lazy" style="aspect-ratio: ${photo.aspect}; object-fit: cover;">
+        <div class="photo-overlay">
+          <div class="photo-info">
+            <div class="photo-title">${photo.title}</div>
+            <div class="photo-author">${photo.author}</div>
+          </div>
+          <div class="photo-likes"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> ${(photo.likes || 0).toLocaleString()}</div>
+        </div>
+      </a>
+    `;
+    masonry.appendChild(card);
+  });
+
+  // Then render default photos
   photos.forEach((photo, index) => {
     const card = document.createElement('div');
     card.className = 'photo-card reveal';
-    card.style.transitionDelay = `${index * 0.1}s`;
+    card.style.transitionDelay = `${(userPosts.length + index) * 0.05}s`;
 
     card.innerHTML = `
       <img src="${photo.url}" alt="${isZh ? photo.title : photo.titleEn}" loading="lazy" style="aspect-ratio: ${photo.aspect}; object-fit: cover;">
       <div class="photo-overlay">
-        <div class="photo-title">${isZh ? photo.title : photo.titleEn}</div>
-        <div class="photo-author">${photo.author}</div>
+        <div class="photo-info">
+          <div class="photo-title">${isZh ? photo.title : photo.titleEn}</div>
+          <div class="photo-author">${photo.author}</div>
+        </div>
       </div>
     `;
 
@@ -331,7 +358,31 @@ function initPhotographersStrip() {
   const strip = document.getElementById('photographersStrip');
   if (!strip || typeof photographers === 'undefined') return;
 
-  Object.entries(photographers).forEach(([id, p]) => {
+  // Build photographer list including users with posts
+  const allPhotographers = { ...photographers };
+
+  // Check if logged-in user has posts, add them as a photographer
+  try {
+    const currentUser = JSON.parse(localStorage.getItem('sl_current_user'));
+    const userPosts = JSON.parse(localStorage.getItem('sl_user_posts') || '[]');
+    if (currentUser && userPosts.length > 0) {
+      const userEmail = currentUser.email;
+      const userPhotos = userPosts.filter(p => p.authorId === userEmail);
+      if (userPhotos.length > 0 && !allPhotographers[userEmail]) {
+        allPhotographers[userEmail] = {
+          name: currentUser.name,
+          bio: '社区摄影师',
+          photos: userPhotos.length,
+          followers: 0, following: 0,
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+          cover: userPhotos[0]?.url || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80',
+          tags: [...new Set(userPhotos.flatMap(p => p.tags || []))].slice(0, 3)
+        };
+      }
+    }
+  } catch(e) {}
+
+  Object.entries(allPhotographers).forEach(([id, p]) => {
     const card = document.createElement('a');
     card.href = `photographer.html?id=${id}`;
     card.className = 'photographer-card';

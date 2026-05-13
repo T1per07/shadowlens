@@ -10,6 +10,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400;600&family=Inter:wght@200;300;400;500&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- Noise overlay -->
+  <div class="noise-overlay"></div>
+
   <!-- Navigation -->
   <nav id="navbar" class="navbar visible">
     <div class="nav-content">
@@ -39,6 +42,12 @@
 
   <!-- Page Header -->
   <div class="page-header">
+    <div class="light-rays"></div>
+    <div class="bokeh-container">
+      <div class="bokeh"></div>
+      <div class="bokeh"></div>
+      <div class="bokeh"></div>
+    </div>
     <h1 class="page-title">发现</h1>
     <p class="page-subtitle">Explore</p>
   </div>
@@ -51,6 +60,11 @@
   <!-- Photo Grid -->
   <div class="photo-grid" id="photoGrid">
     <!-- Photos will be loaded dynamically -->
+  </div>
+
+  <!-- Load More -->
+  <div style="text-align:center; padding: 2rem 0 4rem;">
+    <button class="hero-btn" id="loadMoreBtn" style="font-size:0.8rem; padding:0.75rem 2rem;">加载更多</button>
   </div>
 
   <!-- Footer -->
@@ -68,11 +82,64 @@
         <a href="login.html">登录</a>
       </div>
       <p class="footer-text">发现摄影的艺术</p>
-      <p class="footer-copyright">© 2024 ShadowLens. All rights reserved.</p>
+      <p class="footer-copyright">&copy; 2024 ShadowLens. All rights reserved.</p>
     </div>
   </footer>
 
   <script src="js/pages.js"></script>
-  <script>initExplorePage();</script>
+  <script>
+    initExplorePage();
+
+    // Load more functionality
+    (function() {
+      const btn = document.getElementById('loadMoreBtn');
+      const grid = document.getElementById('photoGrid');
+      if (!btn || !grid) return;
+
+      let currentFilter = 'all';
+      let loadedCount = 12;
+
+      // Track filter changes
+      document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          currentFilter = tab.dataset.filter;
+          loadedCount = 12;
+        });
+      });
+
+      btn.addEventListener('click', () => {
+        let userPosts = [];
+        try { userPosts = JSON.parse(localStorage.getItem('sl_user_posts') || '[]'); } catch(e) {}
+        const allData = [...userPosts, ...allPhotos];
+        const filtered = currentFilter === 'all' ? allData : allData.filter(p => p.category === currentFilter);
+        const nextBatch = filtered.slice(loadedCount, loadedCount + 9);
+
+        if (nextBatch.length === 0) {
+          btn.textContent = '已加载全部';
+          btn.disabled = true;
+          btn.style.opacity = '0.5';
+          return;
+        }
+
+        nextBatch.forEach((photo, i) => {
+          const card = document.createElement('div');
+          card.innerHTML = createPhotoCard(photo);
+          const newCard = card.firstElementChild;
+          newCard.style.opacity = '0';
+          newCard.style.transform = 'translateY(20px)';
+          grid.appendChild(newCard);
+
+          setTimeout(() => {
+            newCard.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            newCard.style.opacity = '1';
+            newCard.style.transform = 'translateY(0)';
+          }, i * 80);
+        });
+
+        loadedCount += nextBatch.length;
+        initPhotoCardEvents();
+      });
+    })();
+  </script>
 </body>
 </html>
