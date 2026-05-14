@@ -1352,7 +1352,9 @@ function refreshTags(photoId, detail) {
   const tagsContainer = detail.querySelector('.photo-detail-tags');
   if (!tagsContainer) return;
 
-  const photo = allPhotos.find(p => p.id === photoId);
+  let userPosts = [];
+  try { userPosts = JSON.parse(localStorage.getItem('sl_user_posts') || '[]'); } catch(e) {}
+  const photo = [...userPosts, ...allPhotos].find(p => p.id === photoId);
   if (!photo) return;
 
   const tagsHtml = (photo.tags || []).map(tag =>
@@ -1707,6 +1709,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   initSearchToggle();
+
+  // Mobile menu toggle
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const navLinks = document.getElementById('navLinks');
+  if (mobileMenuBtn && navLinks) {
+    mobileMenuBtn.addEventListener('click', () => navLinks.classList.toggle('open'));
+  }
 
   // Update nav login button with user state
   const navLoginBtn = document.querySelector('.nav-login');
