@@ -177,6 +177,8 @@
           opt.textContent = cat.zh;
           catSelect.appendChild(opt);
         });
+      } else {
+        console.error('categoryHierarchy not defined - pages.js may have failed to load');
       }
 
       catSelect.addEventListener('change', () => {
@@ -200,7 +202,11 @@
       const previewImg = document.getElementById('previewImg');
       const removeBtn = document.getElementById('removeBtn');
 
-      placeholder.addEventListener('click', () => fileInput.click());
+      uploadArea.addEventListener('click', (e) => {
+        if (!e.target.closest('.upload-remove') && !e.target.closest('.upload-preview img')) {
+          fileInput.click();
+        }
+      });
 
       uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -229,10 +235,23 @@
         }
         const reader = new FileReader();
         reader.onload = (e) => {
-          imageDataUrl = e.target.result;
-          previewImg.src = imageDataUrl;
-          placeholder.style.display = 'none';
-          preview.style.display = 'block';
+          const img = new Image();
+          img.onload = () => {
+            // Compress image for localStorage
+            const canvas = document.createElement('canvas');
+            const maxWidth = 1200;
+            let w = img.width, h = img.height;
+            if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            imageDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+            previewImg.src = imageDataUrl;
+            placeholder.style.display = 'none';
+            preview.style.display = 'block';
+          };
+          img.src = e.target.result;
         };
         reader.readAsDataURL(file);
       }
@@ -277,6 +296,7 @@
       const form = document.getElementById('postForm');
       form.addEventListener('submit', (e) => {
         e.preventDefault();
+        console.log('Form submitted');
 
         if (!imageDataUrl) {
           alert('请上传一张图片');
@@ -289,8 +309,10 @@
         const sub = subSelect.value;
         const camera = document.getElementById('postCamera').value.trim();
 
+        console.log('Form data:', { title, category, sub, hasImage: !!imageDataUrl });
+
         if (!title || !category || !sub) {
-          alert('请填写标题和分类');
+          alert('请填写标题、一级分类和二级分类');
           return;
         }
 
@@ -316,9 +338,14 @@
         };
 
         // Save to localStorage
-        const userPosts = JSON.parse(localStorage.getItem('sl_user_posts') || '[]');
-        userPosts.unshift(post);
-        localStorage.setItem('sl_user_posts', JSON.stringify(userPosts));
+        try {
+          const userPosts = JSON.parse(localStorage.getItem('sl_user_posts') || '[]');
+          userPosts.unshift(post);
+          localStorage.setItem('sl_user_posts', JSON.stringify(userPosts));
+        } catch(err) {
+          alert('保存失败：图片可能太大，请尝试压缩图片后重试');
+          return;
+        }
 
         // Also add to allPhotos if pages.js is loaded
         if (typeof allPhotos !== 'undefined') {
